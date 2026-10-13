@@ -93,6 +93,7 @@ fetch("profiles.json")
       staticProfiles = p;
       enrichRequested.clear(); // allow re-enrichment with the static data
       renderGrid();
+      renderSpotlight();
     }
   })
   .catch(() => {});
@@ -159,12 +160,14 @@ function renderStats() {
 function renderSpotlight() {
   const pool = CREATORS.filter((c) => c.pinned).length ? CREATORS.filter((c) => c.pinned) : CREATORS;
   const c = pool[Math.floor(Math.random() * pool.length)];
+  const followers =
+    staticProfiles[c.handle]?.followers || liveCounts[c.handle]?.followers || c.followers;
   $("#spotlightCard").innerHTML = `
     <div style="display:flex; gap:18px; align-items:center;">
       ${avatarHTML(c).replace('class="avatar"', 'class="avatar" style="width:72px;height:72px;font-size:1.6rem"')}
       <div>
-        <div class="card-name" style="font-size:1.15rem">${c.name}</div>
-        <div class="card-handle">@${c.handle} ${c.followers ? `· ${fmtFollowers(c.followers)} followers` : ""}</div>
+        <div class="card-name" style="font-size:1.15rem">${staticProfiles[c.handle]?.name || c.name}</div>
+        <div class="card-handle">@${c.handle} ${followers ? `· ${fmtFollowers(followers)} followers` : ""}</div>
         <div class="card-desc">${c.desc || ""}</div>
       </div>
     </div>
