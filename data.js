@@ -4,7 +4,10 @@
 //   name    : display name
 //   desc    : one-line description
 //   tags    : array of category tags (used by the filter tabs)
-//   img     : optional avatar image URL (leave "" for a generated initial)
+//   img     : optional custom image URL. Leave "" and the avatar is fetched
+//             automatically from Instagram (via oginstagram.com) — but only
+//             when served from Cloudflare Pages, where /api/avatar exists.
+//             On a local file:// preview the gradient initials show instead.
 //   pinned  : true to always show in the spotlight rotation / top of list
 const CREATORS = [
   {

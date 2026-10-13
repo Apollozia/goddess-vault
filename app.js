@@ -41,10 +41,9 @@ function filtered() {
 
 function avatarHTML(c) {
   const initials = c.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  return c.img
-    ? `<div class="avatar"><img src="${c.img}" alt="${c.name}" loading="lazy"
-         onerror="this.remove(); this.parentElement.textContent='${initials}'"></div>`
-    : `<div class="avatar">${initials}</div>`;
+  const src = c.img || `/api/avatar?handle=${c.handle}`;
+  return `<div class="avatar"><img src="${src}" alt="${c.name}" loading="lazy"
+       onerror="this.remove(); this.parentElement.textContent='${initials}'"></div>`;
 }
 
 function cardHTML(c) {
