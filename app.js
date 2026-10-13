@@ -48,11 +48,11 @@ function avatarHTML(c) {
 
 function cardHTML(c) {
   const tags = c.tags.map((t) => `<span class="tag">${t}</span>`).join("");
-  const followers = c.followers
-    ? `<span class="follower-chip">· ${fmtFollowers(c.followers)} followers</span>`
-    : "";
+  const followers = `<span class="follower-chip">${
+    c.followers ? `· ${fmtFollowers(c.followers)} followers` : ""
+  }</span>`;
   return `
-  <a class="card" href="https://instagram.com/${c.handle}" target="_blank" rel="noopener noreferrer">
+  <a class="card" data-handle="${c.handle}" href="https://instagram.com/${c.handle}" target="_blank" rel="noopener noreferrer">
     ${avatarHTML(c)}
     <div class="card-body">
       <div class="card-name">${c.name}</div>
@@ -78,6 +78,47 @@ function renderGrid() {
   const list = filtered();
   grid.innerHTML = list.map(cardHTML).join("");
   emptyEl.classList.toggle("hidden", list.length > 0);
+  enrichLive();
+}
+
+// Fetch live name/follower counts from /api/profile and patch the cards.
+// Runs only when served from Cloudflare (the API exists there); silently
+// skips anywhere else (e.g. a local file:// preview).
+let enrichRequested = new Set();
+
+function enrichLive() {
+  const liveCounts = {};
+  grid.querySelectorAll(".card").forEach((card) => {
+    const handle = card.dataset.handle;
+    if (!handle || enrichRequested.has(handle)) return;
+    enrichRequested.add(handle);
+    fetch(`/api/profile?handle=${encodeURIComponent(handle)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (!p) return;
+        liveCounts[handle] = p;
+        document
+          .querySelectorAll(`.card[data-handle="${CSS.escape(handle)}"]`)
+          .forEach((el) => {
+            const chip = el.querySelector(".follower-chip");
+            if (chip && p.followers) {
+              chip.textContent = `· ${fmtFollowers(p.followers)} followers`;
+            }
+            const nameEl = el.querySelector(".card-name");
+            if (nameEl && p.name) nameEl.textContent = p.name;
+          });
+        updateTopStat(liveCounts);
+      })
+      .catch(() => {});
+  });
+}
+
+function updateTopStat(liveCounts) {
+  const best = CREATORS.reduce(
+    (max, c) => Math.max(max, liveCounts[c.handle]?.followers || c.followers || 0),
+    0
+  );
+  $("#statTop").textContent = best ? fmtFollowers(best) : "—";
 }
 
 function renderStats() {

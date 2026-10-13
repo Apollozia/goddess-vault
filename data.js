@@ -8,6 +8,8 @@
 //             automatically from Instagram (via oginstagram.com) — but only
 //             when served from Cloudflare Pages, where /api/avatar exists.
 //             On a local file:// preview the gradient initials show instead.
+//   followers: optional static fallback; on the live site the real count is
+//             fetched automatically from Instagram (/api/profile)
 //   pinned  : true to always show in the spotlight rotation / top of list
 const CREATORS = [
   {
