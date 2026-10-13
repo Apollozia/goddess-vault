@@ -4,8 +4,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = fs.readFileSync(path.join(root, "data.js"), "utf8");
 const mod = await import(
   "data:text/javascript;base64," +
