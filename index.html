@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goddess Vault — Curated IG Gallery</title>
+<meta name="description" content="A curated gallery of beautiful creators on Instagram." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">✦</span>
+    <span class="brand-name" id="siteTitle">Goddess Vault</span>
+  </div>
+  <div class="top-actions">
+    <button class="btn ghost" id="themeBtn" title="Toggle theme (T)">🌗 Theme</button>
+  </div>
+</header>
+
+<section class="hero">
+  <p class="tagline" id="siteTagline"></p>
+  <div class="stats">
+    <div class="stat"><span class="stat-num" id="statTotal">0</span><span class="stat-label">Curated</span></div>
+    <div class="stat"><span class="stat-num" id="statTags">0</span><span class="stat-label">Categories</span></div>
+    <div class="stat"><span class="stat-num" id="statTop">—</span><span class="stat-label">Largest following</span></div>
+  </div>
+  <p class="credit">Curated by <span id="siteCurator"></span></p>
+</section>
+
+<section class="spotlight" id="spotlight">
+  <div class="spotlight-head">
+    <h2>✨ Today's Spotlight</h2>
+    <button class="btn ghost" id="rerollBtn">🎲 Re-roll <kbd>R</kbd></button>
+  </div>
+  <div class="spotlight-card" id="spotlightCard"></div>
+</section>
+
+<main class="container">
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Search name, handle or description…  ( / )" />
+    <select id="sortBy">
+      <option value="followers-desc">Followers ↓</option>
+      <option value="followers-asc">Followers ↑</option>
+      <option value="name-asc">Name A–Z</option>
+    </select>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"></div>
+  <p class="empty hidden" id="empty">No creators match your search.</p>
+</main>
+
+<footer class="footer">
+  <p>This site only indexes publicly available Instagram profiles. All links lead to the creators' official Instagram pages — no media is hosted here.</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
