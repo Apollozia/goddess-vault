@@ -1,1 +1,30 @@
-{}
+{
+  "natgeo": {
+    "name": "National Geographic",
+    "followers": 268406910,
+    "img": "images/natgeo.jpg"
+  },
+  "example.yoga": {
+    "name": "Account unavailable",
+    "followers": 39
+  },
+  "example.fashion": {
+    "name": "WE ARE DESIGNER.",
+    "followers": 20,
+    "img": "images/example.fashion.jpg"
+  },
+  "example.art": {
+    "name": "ArTime - Мир в красках 🎨",
+    "followers": 0,
+    "img": "images/example.art.jpg"
+  },
+  "example.food": {
+    "name": "이그잼플",
+    "followers": 10,
+    "img": "images/example.food.jpg"
+  },
+  "example.music": {
+    "name": "Temporarily unavailable",
+    "followers": 39
+  }
+}
