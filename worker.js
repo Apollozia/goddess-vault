@@ -1,9 +1,9 @@
 // Worker entrypoint: serves the static site from ASSETS and handles /api/* routes.
 // GET /api/avatar?handle=<instagram handle> — resolves the account's current
-// profile picture via oginstagram.com and redirects to the signed image URL,
-// edge-cached for an hour.
+// profile picture via oginstagram.com and streams the image back, cached at
+// the edge for a day.
 
-const AVATAR_TTL = 3600;
+const AVATAR_TTL = 86400;
 
 async function avatarResponse(url, ctx) {
   const handle = (url.searchParams.get("handle") || "").replace(/^@/, "").trim();
@@ -13,29 +13,40 @@ async function avatarResponse(url, ctx) {
 
   const cache = caches.default;
   const cacheKey = new Request(`https://avatar.cache/${handle}`);
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
-
-  let target;
   try {
-    const res = await fetch(`https://oginstagram.com/${handle}`, {
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+  } catch {} // cache misses must never break the response
+
+  try {
+    const page = await fetch(`https://oginstagram.com/${handle}`, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; GoddessVault/1.0)" },
     });
-    if (res.ok) {
-      const html = await res.text();
-      const m = html.match(/<meta property="og:image" content="([^"]+)"/);
-      if (m) target = m[1].replace(/&amp;/g, "&");
+    if (page.ok) {
+      const m = (await page.text()).match(/<meta property="og:image" content="([^"]+)"/);
+      if (m) {
+        const img = await fetch(m[1].replace(/&amp;/g, "&"));
+        if (img.ok) {
+          const response = new Response(img.body, {
+            status: 200,
+            headers: {
+              "Content-Type": img.headers.get("Content-Type") || "image/jpeg",
+              "Cache-Control": `public, max-age=${AVATAR_TTL}`,
+            },
+          });
+          ctx.waitUntil(cache.put(cacheKey, response.clone()));
+          return response;
+        }
+      }
     }
   } catch {
-    // fall through to the 404 below
+    // any failure below falls through to the 404
   }
 
-  const response = target
-    ? Response.redirect(target, 302)
-    : new Response("Avatar not found", { status: 404 });
-  response.headers.set("Cache-Control", `public, max-age=${AVATAR_TTL}`);
-  ctx.waitUntil(cache.put(cacheKey, response.clone()));
-  return response;
+  return new Response("Avatar not found", {
+    status: 404,
+    headers: { "Cache-Control": "public, max-age=300" },
+  });
 }
 
 export default {
