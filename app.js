@@ -41,9 +41,10 @@ function filtered() {
 
 function avatarHTML(c) {
   const initials = c.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const src = c.img || `/api/avatar?handle=${c.handle}`;
+  const src = c.img || (staticProfiles[c.handle]?.img ?? `images/${c.handle}.jpg`);
+  if (!src) return `<div class="avatar">${initials}</div>`;
   return `<div class="avatar"><img src="${src}" alt="${c.name}" loading="lazy"
-       onerror="this.remove(); this.parentElement.textContent='${initials}'"></div>`;
+       onerror="if(!this.dataset.f){this.dataset.f=1;this.src='/api/avatar?handle=${c.handle}'}else{this.remove();this.parentElement.textContent='${initials}'}"></div>`;
 }
 
 function cardHTML(c) {
@@ -81,41 +82,68 @@ function renderGrid() {
   enrichLive();
 }
 
-// Fetch live name/follower counts from /api/profile and patch the cards.
-// Runs only when served from Cloudflare (the API exists there); silently
-// skips anywhere else (e.g. a local file:// preview).
+// Live/static profile data. profiles.json is refreshed daily by a GitHub
+// Action; the /api/profile endpoint is a runtime fallback for handles the
+// Action could not fetch.
+let staticProfiles = {};
+fetch("profiles.json")
+  .then((r) => (r.ok ? r.json() : null))
+  .then((p) => {
+    if (p) {
+      staticProfiles = p;
+      enrichRequested.clear(); // allow re-enrichment with the static data
+      renderGrid();
+    }
+  })
+  .catch(() => {});
+
 let enrichRequested = new Set();
 
 function enrichLive() {
-  const liveCounts = {};
   grid.querySelectorAll(".card").forEach((card) => {
     const handle = card.dataset.handle;
     if (!handle || enrichRequested.has(handle)) return;
     enrichRequested.add(handle);
-    fetch(`/api/profile?handle=${encodeURIComponent(handle)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((p) => {
-        if (!p) return;
-        liveCounts[handle] = p;
-        document
-          .querySelectorAll(`.card[data-handle="${CSS.escape(handle)}"]`)
-          .forEach((el) => {
-            const chip = el.querySelector(".follower-chip");
-            if (chip && p.followers) {
-              chip.textContent = `· ${fmtFollowers(p.followers)} followers`;
-            }
-            const nameEl = el.querySelector(".card-name");
-            if (nameEl && p.name) nameEl.textContent = p.name;
-          });
-        updateTopStat(liveCounts);
-      })
-      .catch(() => {});
+    const local = staticProfiles[handle];
+    if (local) {
+      applyProfile(handle, local);
+      updateTopStat(handle, local);
+    } else {
+      fetch(`/api/profile?handle=${encodeURIComponent(handle)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((p) => {
+          if (!p) return;
+          applyProfile(handle, p);
+          updateTopStat(handle, p);
+        })
+        .catch(() => {});
+    }
   });
 }
 
-function updateTopStat(liveCounts) {
+const liveCounts = {};
+
+function applyProfile(handle, p) {
+  liveCounts[handle] = p;
+  document
+    .querySelectorAll(`.card[data-handle="${CSS.escape(handle)}"]`)
+    .forEach((el) => {
+      const chip = el.querySelector(".follower-chip");
+      if (chip && p.followers) {
+        chip.textContent = `· ${fmtFollowers(p.followers)} followers`;
+      }
+      const nameEl = el.querySelector(".card-name");
+      if (nameEl && p.name) nameEl.textContent = p.name;
+    });
+}
+
+function updateTopStat(handle, p) {
   const best = CREATORS.reduce(
-    (max, c) => Math.max(max, liveCounts[c.handle]?.followers || c.followers || 0),
+    (max, c) =>
+      Math.max(
+        max,
+        liveCounts[c.handle]?.followers || staticProfiles[c.handle]?.followers || c.followers || 0
+      ),
     0
   );
   $("#statTop").textContent = best ? fmtFollowers(best) : "—";
